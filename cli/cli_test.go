@@ -47,8 +47,12 @@ func TestLifecycle(t *testing.T) {
 	events := filepath.Join(dir, "events.json")
 
 	out, err := run(t, events, "validate")
-	if err != nil || !strings.Contains(out, "2 credentials and 0 events OK") {
+	if err != nil || !strings.Contains(out, "2 credentials, 0 prerequisites and 0 events OK") ||
+		!strings.Contains(out, "advice: key-a: no entitlements") {
 		t.Fatalf("validate: %v\n%s", err, out)
+	}
+	if out, err = run(t, events, "validate", "--strict"); err == nil || !strings.Contains(err.Error(), "2 piece(s) of advice") {
+		t.Fatalf("validate --strict: %v\n%s", err, out)
 	}
 
 	// Nothing recorded: both are unrecorded, which lists but does not fail.

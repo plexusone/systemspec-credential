@@ -97,19 +97,35 @@ func (e *env) load() (*credspec.Registry, *credspec.Log, error) {
 }
 
 func (e *env) validate() *cobra.Command {
-	return &cobra.Command{
+	var strict bool
+	cmd := &cobra.Command{
 		Use:   "validate",
-		Short: "Check the registry and the event log",
-		Args:  cobra.NoArgs,
+		Short: "Check the registry and the event log, and print advice on entries likely to mislead",
+		Long: "validate fails on a registry or event log that is invalid. It then prints advice: entries that are\n" +
+			"valid but likely to mislead whoever sets them up, such as a provisioned credential handled by hand or a\n" +
+			"rotation procedure naming a variable nothing defines. --strict fails on advice too.",
+		Args: cobra.NoArgs,
 		RunE: func(c *cobra.Command, _ []string) error {
 			r, l, err := e.load()
 			if err != nil {
 				return err
 			}
-			_, err = fmt.Fprintf(c.OutOrStdout(), "%d credentials and %d events OK\n", len(r.Credentials), len(l.Events))
+			w := c.OutOrStdout()
+			advice := r.Lint()
+			for _, a := range advice {
+				if _, err := fmt.Fprintf(w, "advice: %s\n", a); err != nil {
+					return err
+				}
+			}
+			if strict && len(advice) > 0 {
+				return fmt.Errorf("%d piece(s) of advice, and --strict is set", len(advice))
+			}
+			_, err = fmt.Fprintf(w, "%d credentials, %d prerequisites and %d events OK\n", len(r.Credentials), len(r.Prerequisites), len(l.Events))
 			return err
 		},
 	}
+	cmd.Flags().BoolVar(&strict, "strict", false, "fail when there is advice")
+	return cmd
 }
 
 type when struct {
