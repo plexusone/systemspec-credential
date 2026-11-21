@@ -265,14 +265,16 @@
           "type": "string",
           "enum": [
             "human",
+            "agent",
             "system"
           ],
-          "description": "Generate is who makes the value: a person running a command or\nusing a console, or a system such as a provisioning tool."
+          "description": "Generate is who makes the value: a person running a command or\nusing a console, an agent running a command for an operator, or a\nsystem such as a provisioning tool."
         },
         "distribute": {
           "type": "string",
           "enum": [
             "human",
+            "agent",
             "system"
           ],
           "description": "Distribute is who gets the value from its primary store to its\nconsumers, such as a deploy tool rendering it onto a server."
@@ -281,6 +283,7 @@
           "type": "string",
           "enum": [
             "human",
+            "agent",
             "system"
           ],
           "description": "Rotate is who replaces the value when its policy says so."

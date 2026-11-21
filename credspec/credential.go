@@ -315,7 +315,8 @@ func Policies() []Policy { return []Policy{PolicyScheduled, PolicyOnExpiry, Poli
 // Handling says who does each step of a credential's lifecycle.
 type Handling struct {
 	// Generate is who makes the value: a person running a command or
-	// using a console, or a system such as a provisioning tool.
+	// using a console, an agent running a command for an operator, or a
+	// system such as a provisioning tool.
 	Generate Actor `json:"generate"`
 	// Distribute is who gets the value from its primary store to its
 	// consumers, such as a deploy tool rendering it onto a server.
@@ -333,12 +334,16 @@ type Actor string
 const (
 	// ActorHuman is a person, by hand.
 	ActorHuman Actor = "human"
-	// ActorSystem is a system, with no person involved.
+	// ActorAgent is an AI agent acting for an operator, such as a coding
+	// agent running a command. The operator approves what it cannot undo.
+	ActorAgent Actor = "agent"
+	// ActorSystem is a deterministic program, such as a deploy tool or a
+	// CI workflow, with no person or agent involved.
 	ActorSystem Actor = "system"
 )
 
-// Actors lists every Actor.
-func Actors() []Actor { return []Actor{ActorHuman, ActorSystem} }
+// Actors lists every Actor, from the most hands-on to the least.
+func Actors() []Actor { return []Actor{ActorHuman, ActorAgent, ActorSystem} }
 
 // Stage is a step of a credential's lifecycle.
 type Stage string
@@ -366,19 +371,36 @@ func (h Handling) By(s Stage) Actor {
 	return ""
 }
 
-// Manual lists the stages a person does, in lifecycle order.
-func (h Handling) Manual() []Stage {
+// StagesBy lists the stages an actor does, in lifecycle order.
+func (h Handling) StagesBy(a Actor) []Stage {
 	var out []Stage
 	for _, s := range Stages() {
-		if h.By(s) == ActorHuman {
+		if h.By(s) == a {
 			out = append(out, s)
 		}
 	}
 	return out
 }
 
+// Manual lists the stages a person does, in lifecycle order.
+func (h Handling) Manual() []Stage { return h.StagesBy(ActorHuman) }
+
+// Agentic lists the stages an agent does, in lifecycle order.
+func (h Handling) Agentic() []Stage { return h.StagesBy(ActorAgent) }
+
 // Automatic reports whether a system does every stage.
-func (h Handling) Automatic() bool { return len(h.Manual()) == 0 }
+func (h Handling) Automatic() bool { return len(h.StagesBy(ActorSystem)) == len(Stages()) }
+
+// Responsible is the most hands-on actor of any stage: a person if one
+// does any stage, else an agent if one does, else a system.
+func (h Handling) Responsible() Actor {
+	for _, a := range Actors() {
+		if len(h.StagesBy(a)) > 0 {
+			return a
+		}
+	}
+	return ""
+}
 
 // Link is a titled https URL.
 type Link struct {

@@ -440,6 +440,15 @@ func TestHandling(t *testing.T) {
 	if h.By("other") != "" {
 		t.Error("By of an unknown stage")
 	}
+	agent := Handling{Generate: ActorAgent, Distribute: ActorSystem, Rotate: ActorAgent}
+	if agent.Automatic() || len(agent.Manual()) != 0 || !slices.Equal(agent.Agentic(), []Stage{StageGenerate, StageRotate}) {
+		t.Errorf("an agent-handled credential: manual %v, agentic %v", agent.Manual(), agent.Agentic())
+	}
+	for want, x := range map[Actor]Handling{ActorHuman: h, ActorAgent: agent, ActorSystem: auto} {
+		if got := x.Responsible(); got != want {
+			t.Errorf("Responsible(%+v) = %q, want %q", x, got, want)
+		}
+	}
 }
 
 func TestReach(t *testing.T) {
