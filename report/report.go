@@ -50,6 +50,9 @@ type HandlingSummary struct {
 	Total int `json:"total"`
 	// Manual is how many have at least one step done by a person.
 	Manual int `json:"manual"`
+	// Agent is how many have no step done by a person and at least one
+	// done by an agent.
+	Agent int `json:"agent"`
 	// Automatic is how many have every step done by a system.
 	Automatic int `json:"automatic"`
 	// ByStage counts each stage's actors.
@@ -77,10 +80,13 @@ func Summarize(creds []credspec.Credential) HandlingSummary {
 			continue
 		}
 		h.Total++
-		if c.Handling.Automatic() {
-			h.Automatic++
-		} else {
+		switch c.Handling.Responsible() {
+		case credspec.ActorHuman:
 			h.Manual++
+		case credspec.ActorAgent:
+			h.Agent++
+		default:
+			h.Automatic++
 		}
 		for _, st := range credspec.Stages() {
 			h.ByStage[st][c.Handling.By(st)]++

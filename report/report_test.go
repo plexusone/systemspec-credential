@@ -36,7 +36,7 @@ func fixture(t *testing.T) (*credspec.Registry, *credspec.Log, time.Time) {
 	overdue.Recovery = "None: regenerate."
 	planned := cred("a-app/staging/NEW", "a-app", credspec.PolicyOnDemand, 0)
 	planned.Status = credspec.StatusPlanned
-	planned.Handling = credspec.Handling{Generate: credspec.ActorSystem, Distribute: credspec.ActorSystem, Rotate: credspec.ActorSystem}
+	planned.Handling = credspec.Handling{Generate: credspec.ActorSystem, Distribute: credspec.ActorSystem, Rotate: credspec.ActorAgent}
 	r := credspec.NewRegistry(ok, overdue, planned)
 	if err := r.Validate(); err != nil {
 		t.Fatal(err)
@@ -71,7 +71,7 @@ func TestBuildOrdersByUrgency(t *testing.T) {
 	if h := rep.Handling; h.RotationsPerYear != 13.2 || h.ExpiringByHand != 0 {
 		t.Errorf("rotations = %v, expiring = %d", h.RotationsPerYear, h.ExpiringByHand)
 	}
-	if h := rep.Handling; h.Total != 3 || h.Manual != 2 || h.Automatic != 1 || h.ByStage[credspec.StageRotate][credspec.ActorHuman] != 2 {
+	if h := rep.Handling; h.Total != 3 || h.Manual != 2 || h.Agent != 1 || h.Automatic != 0 || h.ByStage[credspec.StageRotate][credspec.ActorHuman] != 2 {
 		t.Errorf("handling = %+v", rep.Handling)
 	}
 	if rep.Counts[credspec.StateOverdue] != 1 || rep.WarnDays != 30 {
@@ -139,7 +139,7 @@ func TestHTMLIsSelfContainedAndEscaped(t *testing.T) {
 	if !strings.Contains(out, `const urgency = ["expired","overdue"`) {
 		t.Error("urgency order not embedded")
 	}
-	if !strings.Contains(out, "By hand: <strong>2</strong> of 3 credentials need a person for at least one step (generate 2 · distribute 0 · rotate 2) · automatic: <strong>1</strong>") {
+	if !strings.Contains(out, "By hand: <strong>2</strong> of 3 credentials need a person for at least one step (generate 2 · distribute 0 · rotate 2) · by an agent: <strong>1</strong> · automatic: <strong>0</strong>") {
 		t.Error("handling summary missing")
 	}
 	asOf, err := AsOf(b.Bytes())
@@ -167,10 +167,11 @@ func TestMarkdown(t *testing.T) {
 		"- **Command:** `openssl rand -hex 32`",
 		"- **Stored (primary):** aws-ssm; `/x/a-app/prod/OLD`",
 		"- **Rotation:** on-demand",
-		"| [a-app](#a-app) | 2 | 1 | 1 | 0 | 1 | 1 |",
-		"Of 3 credentials that are not retired, 2 need a person for at least one step and 1 are handled entirely by systems.",
-		"| generate | 2 | 1 |",
-		"| distribute | 0 | 3 |",
+		"| [a-app](#a-app) | 2 | 1 | 1 | 0 | 1 | 1 | 0 |",
+		"Of 3 credentials that are not retired, 2 need a person for at least one step, 1 need an agent but no person, and 0 are handled entirely by systems.",
+		"| generate | 2 | 0 | 1 |",
+		"| distribute | 0 | 0 | 3 |",
+		"| rotate | 2 | 1 | 0 |",
 		"- **Handling:** generate by human, distribute by system, rotate by human (automation: deploy)",
 		"Rotation by hand: about 13.2 scheduled rotations a year, and 0 credentials when their issuer's expiry comes.",
 		"## By Hand, by Place\n",

@@ -25,30 +25,30 @@ func Markdown(w io.Writer, title string, r *credspec.Registry) error {
 	m.blank()
 
 	systems := groupBySystem(r)
-	m.line("| System | Credentials | Planned | Active | Retired | By hand | Automatic |")
-	m.line("|---|---|---|---|---|---|---|")
+	m.line("| System | Credentials | Planned | Active | Retired | By hand | By an agent | Automatic |")
+	m.line("|---|---|---|---|---|---|---|---|")
 	for _, s := range systems {
 		counts := map[credspec.Status]int{}
 		for _, c := range s.creds {
 			counts[c.Status]++
 		}
 		h := Summarize(s.creds)
-		m.linef("| [%s](#%s) | %d | %d | %d | %d | %d | %d |", cell(s.name), anchor(s.name), len(s.creds),
+		m.linef("| [%s](#%s) | %d | %d | %d | %d | %d | %d | %d |", cell(s.name), anchor(s.name), len(s.creds),
 			counts[credspec.StatusPlanned], counts[credspec.StatusActive], counts[credspec.StatusRetired],
-			h.Manual, h.Automatic)
+			h.Manual, h.Agent, h.Automatic)
 	}
 	m.blank()
 
 	h := Summarize(r.Credentials)
 	m.line("## Who Does What")
 	m.blank()
-	m.linef("Of %d credentials that are not retired, %d need a person for at least one step and %d are handled entirely by systems.",
-		h.Total, h.Manual, h.Automatic)
+	m.linef("Of %d credentials that are not retired, %d need a person for at least one step, %d need an agent but no person, and %d are handled entirely by systems.",
+		h.Total, h.Manual, h.Agent, h.Automatic)
 	m.blank()
-	m.line("| Step | By hand | By a system |")
-	m.line("|---|---|---|")
+	m.line("| Step | By hand | By an agent | By a system |")
+	m.line("|---|---|---|---|")
 	for _, st := range credspec.Stages() {
-		m.linef("| %s | %d | %d |", st, h.ByStage[st][credspec.ActorHuman], h.ByStage[st][credspec.ActorSystem])
+		m.linef("| %s | %d | %d | %d |", st, h.ByStage[st][credspec.ActorHuman], h.ByStage[st][credspec.ActorAgent], h.ByStage[st][credspec.ActorSystem])
 	}
 	m.blank()
 	m.linef("Rotation by hand: about %s scheduled rotations a year, and %s when their issuer's expiry comes.",

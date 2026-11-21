@@ -84,9 +84,11 @@ func planSummary(m *md, rep Report) {
 	m.linef("| Credentials | %d |", len(rep.Rows))
 	m.linef("| Active / planned / retired | %d / %d / %d |", status[credspec.StatusActive], status[credspec.StatusPlanned], status[credspec.StatusRetired])
 	m.linef("| Need a person for at least one step | %d |", h.Manual)
+	m.linef("| Need an agent but no person | %d |", h.Agent)
 	m.linef("| Handled entirely by systems | %d |", h.Automatic)
 	for _, st := range credspec.Stages() {
-		m.linef("| %s by hand / by a system | %d / %d |", capital(string(st)), h.ByStage[st][credspec.ActorHuman], h.ByStage[st][credspec.ActorSystem])
+		m.linef("| %s by hand / by an agent / by a system | %d / %d / %d |", capital(string(st)),
+			h.ByStage[st][credspec.ActorHuman], h.ByStage[st][credspec.ActorAgent], h.ByStage[st][credspec.ActorSystem])
 	}
 	m.linef("| Scheduled rotations by hand, per year | about %s |", strconv.FormatFloat(h.RotationsPerYear, 'f', -1, 64))
 	m.linef("| Rotated by hand at the issuer's expiry | %s |", credentials(h.ExpiringByHand))
@@ -105,7 +107,7 @@ func planSummary(m *md, rep Report) {
 		}
 		counts[k]["all"]++
 		counts[k][string(row.Credential.Status)]++
-		if !row.Credential.Handling.Automatic() {
+		if row.Credential.Handling.Responsible() == credspec.ActorHuman {
 			counts[k]["hand"]++
 		}
 	}
