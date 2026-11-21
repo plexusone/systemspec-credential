@@ -21,6 +21,7 @@
 - [x] **RMI-OMNICREDENTIAL-023** Management plan: summary, launch checklist in dependency order, rotation calendar, account protections and exposure
 - [x] **RMI-OMNICREDENTIAL-024** Calendar export: rotations and expiries as iCalendar events with reminders
 - [x] **RMI-OMNICREDENTIAL-025** Work progress: to create, to deploy, deployed, from a deployed event, with each credential's next step in every report
+- [x] **RMI-OMNICREDENTIAL-026** Agent actor: an AI agent acting for an operator as a third kind of handler, counted in every report
 
 ## Phase 3: Observed State
 

@@ -10,6 +10,34 @@
   ],
   "releases": [
     {
+      "version": "v0.2.0",
+      "date": "2026-11-20",
+      "highlights": [
+        {
+          "description": "Handling can say an AI agent, acting for an operator, does a stage: `human`, `agent` or `system`, and every report counts the credentials an agent handles"
+        }
+      ],
+      "added": [
+        {
+          "description": "`agent` actor for `handling.generate`, `distribute` and `rotate`, with `Handling.StagesBy`, `Agentic` and `Responsible` (the most hands-on actor of the three stages); the registry schema lists it",
+          "commit": "1231e31",
+          "rmis": ["RMI-OMNICREDENTIAL-026"]
+        },
+        {
+          "description": "Reports count credentials an agent handles with no person involved, and each stage's agent count; the HTML report has a Handled column and filter value for agents",
+          "commit": "fe045cb",
+          "rmis": ["RMI-OMNICREDENTIAL-026"]
+        }
+      ],
+      "changed": [
+        {
+          "description": "`Handling.Automatic` is true only when a system does every stage, so a credential an agent handles is no longer counted as automatic",
+          "commit": "1231e31",
+          "rmis": ["RMI-OMNICREDENTIAL-026"]
+        }
+      ]
+    },
+    {
       "version": "v0.1.0",
       "date": "2026-11-01",
       "highlights": [
