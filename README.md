@@ -36,6 +36,10 @@ credential stands.
 - **Who does what.** Each credential says whether a person or a system
   generates, distributes and rotates it, and the reports count how many
   need you by hand and how many are fully automatic.
+- **Setup guidance.** Each credential can say when it is needed, what is
+  set up first, and which tool makes it; prerequisites at issuers, such as
+  a cloud project or a consent screen, sit beside the credentials, and
+  `validate` advises on entries likely to mislead whoever sets them up.
 - **What a leak exposes.** `reaches` and `dependsOn` link credentials, so
   each one shows everything a holder can get, directly or through others,
   and which credentials expose it.
@@ -85,7 +89,7 @@ credspec report   --format html -o credentials.html --registry credentials.json 
 
 | Command | What it does |
 |---|---|
-| `validate` | Checks the registry and the event log |
+| `validate` | Checks the registry and the event log, and prints advice on entries likely to mislead (`--strict` fails on it) |
 | `status` | Lists credentials needing attention; fails on `--fail-on` states (default `expired,overdue`); `--manual` for only those with a step by hand |
 | `report` | Writes `--format html`, `markdown`, `plan`, `ics` or `json` |
 | `record <id-or-pattern> <type>` | Adds a `created`, `rotated`, `expires`, `deployed`, `verified` or `revoked` event; `'app/prod/*'` records every match |
