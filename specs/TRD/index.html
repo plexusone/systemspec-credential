@@ -946,6 +946,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../releases/v0.3.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v0.3.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../releases/v0.2.0/" class="md-nav__link">
         
   
@@ -1258,6 +1286,16 @@ both from one function.</p>
 <td><code>planned</code>, <code>active</code>, <code>retired</code></td>
 </tr>
 <tr>
+<td><code>need</code></td>
+<td>enum</td>
+<td><code>launch</code>, <code>later</code>, <code>optional</code>, <code>rotation</code>; empty when unstated</td>
+</tr>
+<tr>
+<td><code>requires</code></td>
+<td>list</td>
+<td>IDs of credentials and prerequisites set up first; order only</td>
+</tr>
+<tr>
 <td><code>sensitivity</code></td>
 <td>enum</td>
 <td><code>low</code>, <code>medium</code>, <code>high</code>, <code>critical</code></td>
@@ -1270,22 +1308,27 @@ both from one function.</p>
 <tr>
 <td><code>issuer</code></td>
 <td>object</td>
-<td><code>type</code> (slug), <code>account</code>, <code>console</code> (URL)</td>
+<td><code>type</code> (slug), <code>account</code>, <code>console</code> (URL), <code>mode</code> (slug: <code>test</code>, <code>live</code>)</td>
 </tr>
 <tr>
 <td><code>generation</code></td>
 <td>object</td>
-<td><code>method</code> (enum), <code>spec</code>, <code>where</code>, <code>command</code>, <code>steps</code></td>
+<td><code>method</code> (enum), <code>spec</code>, <code>where</code>, <code>command</code>, <code>steps</code>, <code>provisioner</code> (<code>tool</code>, <code>command</code>, <code>runBy</code> actor, <code>stores</code>)</td>
 </tr>
 <tr>
 <td><code>entitlements</code></td>
 <td>list</td>
-<td><code>resource</code>, <code>access</code>, <code>note</code></td>
+<td><code>resource</code>, <code>access</code>, <code>note</code>, <code>grantedBy</code></td>
 </tr>
 <tr>
 <td><code>stores</code></td>
 <td>list</td>
-<td><code>type</code> (slug), <code>role</code> (enum), <code>account</code>, <code>path</code>, <code>console</code> (URL), <code>install</code> (how the value gets there), <code>note</code></td>
+<td><code>type</code> (slug), <code>role</code> (enum), <code>account</code>, <code>path</code>, <code>console</code> (URL), <code>install</code> (how the value gets there), <code>note</code>, <code>backup</code></td>
+</tr>
+<tr>
+<td><code>configChanges</code></td>
+<td>list</td>
+<td>Edits a consumer's configuration needs before it reads the value</td>
 </tr>
 <tr>
 <td><code>consumers</code></td>
@@ -1295,7 +1338,7 @@ both from one function.</p>
 <tr>
 <td><code>rotation</code></td>
 <td>object</td>
-<td><code>policy</code> (enum), <code>intervalDays</code>, <code>procedure</code>, <code>impact</code></td>
+<td><code>policy</code> (enum), <code>intervalDays</code>, <code>procedure</code>, <code>impact</code>, <code>secondaries</code> (IDs that exist only during a rotation)</td>
 </tr>
 <tr>
 <td><code>handling</code></td>
@@ -1355,8 +1398,17 @@ both from one function.</p>
   <code>postgres</code>, <code>stripe</code>, <code>registrar</code>.</li>
 <li><strong>store type:</strong> <code>aws-ssm</code>, <code>aws-secrets-manager</code>, <code>aws-kms</code>,
   <code>github-actions</code>, <code>password-manager</code>, <code>pulumi-config</code>, <code>host-file</code>,
-  <code>local-file</code>, <code>none</code>.</li>
+  <code>local-file</code>, <code>process-env</code>, <code>none</code>.</li>
+<li><strong>issuer mode:</strong> <code>test</code>, <code>live</code>.</li>
 </ul>
+<p>The registry also lists <code>prerequisites</code>: what is set up at an issuer
+before some credentials, holding no secret. Each has <code>id</code> (unique among
+credentials and prerequisites), <code>name</code>, <code>description</code>, <code>system</code>,
+<code>environment</code>, <code>status</code>, <code>need</code>, <code>issuer</code>, <code>steps</code>, <code>command</code>, <code>done</code>,
+<code>requires</code> and <code>links</code>. <code>Registry.SetupOrder</code> lists every entry after what
+it requires and depends on, prerequisites first, keeping registry order
+otherwise. <code>Credential.SetUpBy</code> is the provisioner's <code>runBy</code> when a tool
+makes the value, else <code>handling.generate</code>.</p>
 <p>Closed sets:</p>
 <ul>
 <li><strong>generation method:</strong> <code>random</code>, <code>keypair</code>, <code>issued</code>, <code>derived</code>,
@@ -1365,7 +1417,9 @@ both from one function.</p>
   copy), <code>rendered</code> (written from the primary at deploy time).</li>
 <li><strong>rotation policy:</strong> <code>scheduled</code> (every <code>intervalDays</code>), <code>on-expiry</code>
   (before the issuer's expiry), <code>on-demand</code> (only on compromise or need).</li>
-<li><strong>actor</strong>, for each <code>handling</code> stage: <code>human</code> (a person, by hand) or
+<li><strong>need:</strong> <code>launch</code>, <code>later</code>, <code>optional</code>, <code>rotation</code>.</li>
+<li><strong>actor</strong>, for each <code>handling</code> stage and a provisioner's <code>runBy</code>:
+  <code>human</code> (a person, by hand), <code>agent</code> (an AI agent for an operator) or
   <code>system</code>. <code>generate</code> makes the value, <code>distribute</code> gets it from its
   primary store to its consumers, <code>rotate</code> replaces it. <code>automation</code>
   names the systems doing the <code>system</code> stages.</li>
@@ -1379,9 +1433,21 @@ both from one function.</p>
   <code>federated</code>.</li>
 <li><code>scheduled</code> requires <code>intervalDays</code> &gt; 0; other policies forbid it.</li>
 <li><code>dependsOn</code> and <code>reaches</code> name existing IDs and never the entry itself.</li>
+<li><code>requires</code> and <code>rotation.secondaries</code> name existing credentials or
+  prerequisites, never the entry itself, and the setup order has no
+  cycle.</li>
+<li>A provisioner has a tool, a command and a <code>runBy</code> actor; a
+  prerequisite has steps or a command.</li>
 <li>Link and console URLs are absolute <code>https</code> URLs.</li>
 <li>All problems are reported together, each with the entry's ID.</li>
 </ul>
+<p><code>Registry.Lint</code> returns advice on valid entries likely to mislead:
+a provisioned credential not generated by <code>system</code>, or one whose
+provisioner stores the value while an install asks for it by hand; no
+entitlements unless federated; a rotation procedure naming a variable no
+credential name, consumer <code>via</code> or configuration change has; a rotation
+secondary whose need is not <code>rotation</code>. <code>validate</code> prints it, and fails
+on it with <code>--strict</code>.</p>
 <h2 id="event-log">Event Log<a class="headerlink" href="#event-log" title="Permanent link">&para;</a></h2>
 <p>An append-only JSON list of events: <code>credential</code> (an ID), <code>type</code>, <code>at</code>,
 optional <code>expires</code>, <code>by</code> and <code>note</code>.</p>
