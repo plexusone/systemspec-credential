@@ -195,8 +195,21 @@ func NextStep(c credspec.Credential, p credspec.Progress) string {
 		if c.Generation.Method == credspec.MethodDerived {
 			create = "Build it from " + strings.Join(c.DependsOn, ", ")
 		}
+		pv := c.Generation.Provisioner
+		if pv != nil {
+			create = "Run " + pv.Command
+		}
+		if len(c.Requires) > 0 {
+			parts = append(parts, "First set up "+strings.Join(c.Requires, ", ")+".")
+		}
 		parts = append(parts, create+".")
+		for _, ch := range c.ConfigChanges {
+			parts = append(parts, "Configure: "+sentence(ch))
+		}
 		for _, s := range c.Stores {
+			if pv != nil && pv.Stores && s.Role == credspec.RolePrimary {
+				continue
+			}
 			if s.Role != credspec.RoleRendered && s.Install != "" {
 				parts = append(parts, "Install in "+strings.Join(nonEmpty(s.Type, s.Path), " ")+": "+sentence(s.Install))
 			}

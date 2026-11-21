@@ -175,7 +175,10 @@ func planChecklist(m *md, rep Report, r *credspec.Registry, o PlanOptions) {
 		if row.Progress != credspec.ProgressToCreate {
 			continue
 		}
-		if c.Handling.Generate != credspec.ActorHuman {
+		if c.Need == credspec.NeedRotation {
+			continue
+		}
+		if c.SetUpBy() != credspec.ActorHuman {
 			auto++
 			continue
 		}
@@ -200,6 +203,7 @@ func planChecklist(m *md, rep Report, r *credspec.Registry, o PlanOptions) {
 			cmp.Compare(sysRank(a.system), sysRank(b.system)), strings.Compare(a.system, b.system), strings.Compare(a.env, b.env))
 	})
 
+	planPrerequisites(m, r)
 	m.line("## Launch Checklist")
 	m.blank()
 	n := 0
@@ -242,7 +246,7 @@ func dependencyOrder(rows []Row) []Row {
 			return
 		}
 		done[r.Credential.ID] = true
-		for _, d := range r.Credential.DependsOn {
+		for _, d := range append(slices.Clone(r.Credential.Requires), r.Credential.DependsOn...) {
 			if dep, ok := in[d]; ok {
 				visit(dep)
 			}
@@ -258,15 +262,24 @@ func dependencyOrder(rows []Row) []Row {
 func checklistItem(m *md, row Row, o PlanOptions) {
 	c := row.Credential
 	g := c.Generation
-	m.linef("- [ ] **%s** (%s, %s)", c.ID, c.Kind, row.Assessment.State)
+	m.linef("- [ ] **%s** (%s)", c.ID, strings.Join(nonEmpty(c.Kind, string(row.Assessment.State), string(c.Need)), ", "))
 	sub := func(label, text string) {
 		if strings.TrimSpace(text) != "" {
 			m.linef("    - %s: %s", label, oneLine(text))
 		}
 	}
-	sub("Create", strings.Join(nonEmpty(strings.Join(nonEmpty(c.Issuer.Type, c.Issuer.Account), ", "), g.Where, link("console", c.Issuer.Console)), "; "))
+	sub("Create", strings.Join(nonEmpty(strings.Join(nonEmpty(c.Issuer.Type, c.Issuer.Account), ", "), g.Where, consoleLink(c.Issuer.Console)), "; "))
+	if len(c.Requires) > 0 {
+		sub("After", strings.Join(c.Requires, ", "))
+	}
 	if g.Method == credspec.MethodDerived {
 		sub("Build it from", strings.Join(c.DependsOn, ", "))
+	}
+	if p := g.Provisioner; p != nil {
+		sub("Run", code(p.Command))
+	}
+	for _, ch := range c.ConfigChanges {
+		sub("Configure", ch)
 	}
 	if g.Command != "" {
 		sub("Command", code(g.Command))
@@ -277,9 +290,13 @@ func checklistItem(m *md, row Row, o PlanOptions) {
 	for _, s := range c.Stores {
 		dest := strings.Join(nonEmpty(s.Type, s.Account, code(s.Path)), " ")
 		how := s.Install
+		written := false
+		if pv := g.Provisioner; pv != nil && pv.Stores && s.Role == credspec.RolePrimary {
+			how, written = "written by "+pv.Tool, true
+		}
 		if how == "" {
 			how = "(no install step given)"
-		} else if looksLikeCommand(how) {
+		} else if !written && looksLikeCommand(how) {
 			how = code(how)
 		}
 		label := "Install"
@@ -498,4 +515,53 @@ func capital(s string) string {
 		return s
 	}
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+// planPrerequisites lists the prerequisites not set up yet, in setup
+// order, before the credentials that require them.
+func planPrerequisites(m *md, r *credspec.Registry) {
+	var todo []credspec.Prerequisite
+	order, err := r.SetupOrder()
+	if err != nil {
+		// Validate refuses a registry with a cycle, so keep registry order.
+		order = nil
+		for _, p := range r.Prerequisites {
+			order = append(order, credspec.SetupStep{ID: p.ID, Prerequisite: true})
+		}
+	}
+	for _, st := range order {
+		if !st.Prerequisite {
+			continue
+		}
+		if p, ok := r.FindPrerequisite(st.ID); ok && p.Status == credspec.StatusPlanned {
+			todo = append(todo, p)
+		}
+	}
+	if len(todo) == 0 {
+		return
+	}
+	m.line("## Prerequisites")
+	m.blank()
+	m.linef("Set up first, at the issuer: %d, none holding a secret.", len(todo))
+	m.blank()
+	for _, p := range todo {
+		m.linef("- [ ] **%s** (%s)", p.ID, strings.Join(nonEmpty(p.Name, strings.Join(nonEmpty(p.System, p.Environment), " · "), string(p.Need)), ", "))
+		sub := func(label, text string) {
+			if strings.TrimSpace(text) != "" {
+				m.linef("    - %s: %s", label, oneLine(text))
+			}
+		}
+		sub("Where", strings.Join(nonEmpty(p.Issuer.Type, p.Issuer.Account, consoleLink(p.Issuer.Console)), "; "))
+		if len(p.Requires) > 0 {
+			sub("After", strings.Join(p.Requires, ", "))
+		}
+		if p.Command != "" {
+			sub("Command", code(p.Command))
+		}
+		for i, st := range p.Steps {
+			sub(fmt.Sprintf("Step %d", i+1), st)
+		}
+		sub("Done when", p.Done)
+	}
+	m.blank()
 }

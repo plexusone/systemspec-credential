@@ -249,3 +249,62 @@ func TestNextStepNamesAPlaceOnce(t *testing.T) {
 		t.Errorf("NextStep = %q", got)
 	}
 }
+
+func TestSetupGuidance(t *testing.T) {
+	r, l, now := fixture(t)
+	c, _ := r.Find("a-app/staging/NEW")
+	c.Need = credspec.NeedLaunch
+	c.Requires = []string{"a-app/staging/project"}
+	c.ConfigChanges = []string{"key: ${NEW}"}
+	c.Issuer.Mode = credspec.ModeTest
+	c.Entitlements = []credspec.Entitlement{{Resource: "db", Access: "owner", GrantedBy: "the provisioner"}}
+	c.Stores[0].Backup = "the nightly job"
+	c.Generation.Provisioner = &credspec.Provisioner{Tool: "tool db", Command: "tool db apply a-app staging", RunBy: credspec.ActorHuman, Stores: true}
+	c.Stores[0].Install = "aws ssm put-parameter"
+	r.Credentials[2] = c
+	r.Prerequisites = []credspec.Prerequisite{{ID: "a-app/staging/project", Name: "Project", System: "a-app", Environment: "staging",
+		Status: credspec.StatusPlanned, Need: credspec.NeedLaunch, Issuer: credspec.Issuer{Type: credspec.IssuerGoogleCloud},
+		Steps: []string{"Create the project."}, Done: "It is listed."}}
+	if err := r.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	rep := Build("Team", r, l, now, credspec.DefaultWarn)
+	var plan, ref bytes.Buffer
+	if err := rep.Plan(&plan, r, PlanOptions{RecordCommand: "tool record"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Markdown(&ref, "Credentials", r); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"## Prerequisites\n\nSet up first, at the issuer: 1, none holding a secret.\n\n- [ ] **a-app/staging/project** (Project, a-app · staging, launch)\n    - Where: google-cloud\n    - Step 1: Create the project.\n    - Done when: It is listed.",
+		"- [ ] **a-app/staging/NEW** (random-secret, planned, launch)\n    - Create: self\n    - After: a-app/staging/project\n    - Run: `tool db apply a-app staging`\n    - Configure: key: ${NEW}",
+		"aws-ssm `/x/a-app/staging/NEW`: written by tool db",
+	} {
+		if !strings.Contains(plan.String(), want) {
+			t.Errorf("plan lacks %q:\n%s", want, plan.String())
+		}
+	}
+	for _, want := range []string{
+		"- **Needed:** launch",
+		"- **Set up after:** [a-app/staging/project](#a-app-staging-project)",
+		"- **Provisioned by:** tool db; `tool db apply a-app staging`; run by human; it stores the value",
+		"- **Entitled:** db: owner; granted by the provisioner",
+		"- **Configuration:** key: ${NEW}",
+		"backed up by the nightly job",
+		"- **Issuer:** self, test mode",
+		"## Prerequisites",
+		"- **Done when:** It is listed.",
+	} {
+		if !strings.Contains(ref.String(), want) {
+			t.Errorf("reference lacks %q", want)
+		}
+	}
+	for _, row := range rep.Rows {
+		if row.Credential.ID == c.ID {
+			if want := "First set up a-app/staging/project. Run tool db apply a-app staging. Configure: key: ${NEW}. Then record it as created."; row.NextStep != want {
+				t.Errorf("next step %q, want %q", row.NextStep, want)
+			}
+		}
+	}
+}

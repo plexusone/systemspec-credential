@@ -71,10 +71,56 @@ func Markdown(w io.Writer, title string, r *credspec.Registry) error {
 			details(m, r, c)
 		}
 	}
+	prerequisites(m, r)
 	if err := m.err; err != nil {
 		return err
 	}
 	return bw.Flush()
+}
+
+// prerequisites lists what is set up at issuers before credentials.
+func prerequisites(m *md, r *credspec.Registry) {
+	if len(r.Prerequisites) == 0 {
+		return
+	}
+	m.line("## Prerequisites")
+	m.blank()
+	m.line("Set up at an issuer before the credentials that require them; none holds a secret.")
+	m.blank()
+	for _, p := range r.Prerequisites {
+		m.line(`<a id="` + anchor(p.ID) + `"></a>`)
+		m.blank()
+		m.linef("### %s", p.ID)
+		m.blank()
+		if p.Description != "" {
+			m.line(p.Description)
+			m.blank()
+		}
+		field := func(name, value string) {
+			if strings.TrimSpace(value) != "" {
+				m.linef("- **%s:** %s", name, oneLine(value))
+			}
+		}
+		field("Name", p.Name)
+		field("System", strings.Join(nonEmpty(p.System, p.Environment), ", "))
+		field("Status", string(p.Status))
+		field("Needed", string(p.Need))
+		field("Issuer", issuerSummary(p.Issuer))
+		if len(p.Requires) > 0 {
+			field("Set up after", refs(p.Requires))
+		}
+		if p.Command != "" {
+			field("Command", code(p.Command))
+		}
+		for i, s := range p.Steps {
+			field(fmt.Sprintf("Step %d", i+1), s)
+		}
+		field("Done when", p.Done)
+		for _, l := range p.Links {
+			field("Link", fmt.Sprintf("[%s](%s)", strings.ReplaceAll(l.Title, "]", ")"), l.URL))
+		}
+		m.blank()
+	}
 }
 
 type system struct {
@@ -112,11 +158,18 @@ func details(m *md, r *credspec.Registry, c credspec.Credential) {
 	}
 	field("Kind", c.Kind)
 	field("Status", string(c.Status))
+	field("Needed", string(c.Need))
+	if len(c.Requires) > 0 {
+		field("Set up after", refs(c.Requires))
+	}
 	field("Sensitivity", string(c.Sensitivity))
 	field("Owner", c.Owner)
 	field("Issuer", issuerSummary(c.Issuer))
 	g := c.Generation
 	field("Generated", strings.Join(nonEmpty(string(g.Method), g.Spec, g.Where), "; "))
+	if p := g.Provisioner; p != nil {
+		field("Provisioned by", strings.Join(nonEmpty(p.Tool, code(p.Command), "run by "+string(p.RunBy), storesNote(p)), "; "))
+	}
 	if g.Command != "" {
 		field("Command", "`"+strings.ReplaceAll(g.Command, "`", "'")+"`")
 	}
@@ -124,10 +177,13 @@ func details(m *md, r *credspec.Registry, c credspec.Credential) {
 		field(fmt.Sprintf("Step %d", i+1), s)
 	}
 	for _, e := range c.Entitlements {
-		field("Entitled", strings.Join(nonEmpty(e.Resource+": "+e.Access, e.Note), "; "))
+		field("Entitled", strings.Join(nonEmpty(e.Resource+": "+e.Access, e.Note, grantedBy(e)), "; "))
+	}
+	for _, ch := range c.ConfigChanges {
+		field("Configuration", ch)
 	}
 	for _, s := range c.Stores {
-		field("Stored ("+string(s.Role)+")", strings.Join(nonEmpty(s.Type, s.Account, code(s.Path), s.Note, link("console", s.Console)), "; "))
+		field("Stored ("+string(s.Role)+")", strings.Join(nonEmpty(s.Type, s.Account, code(s.Path), s.Note, consoleLink(s.Console), backedUp(s)), "; "))
 		if s.Install != "" {
 			field("Install ("+string(s.Role)+")", s.Install)
 		}
@@ -141,6 +197,9 @@ func details(m *md, r *credspec.Registry, c credspec.Credential) {
 	field("Recovery", c.Recovery)
 	field("Rotation procedure", c.Rotation.Procedure)
 	field("Rotation impact", c.Rotation.Impact)
+	if len(c.Rotation.Secondaries) > 0 {
+		field("During rotation", refs(c.Rotation.Secondaries))
+	}
 	field("Revocation", c.Revocation)
 	field("Exposure", c.Exposure)
 	if len(c.DependsOn) > 0 {
@@ -202,7 +261,7 @@ func byPlace(m *md, r *credspec.Registry) {
 		m.line("### " + p.name)
 		m.blank()
 		for _, c := range p.creds {
-			where := strings.Join(nonEmpty(link("console", c.Issuer.Console)), "")
+			where := strings.Join(nonEmpty(consoleLink(c.Issuer.Console)), "")
 			if where != "" {
 				where = " · " + where
 			}
@@ -219,11 +278,12 @@ func credentials(n int) string {
 	return fmt.Sprintf("%d credentials", n)
 }
 
-func link(title, url string) string {
+// consoleLink links to a console, or is empty without one.
+func consoleLink(url string) string {
 	if url == "" {
 		return ""
 	}
-	return fmt.Sprintf("[%s](%s)", title, url)
+	return fmt.Sprintf("[console](%s)", url)
 }
 
 func storeSummary(c credspec.Credential) string {
@@ -266,11 +326,48 @@ func rotationSummary(r credspec.Rotation) string {
 }
 
 func issuerSummary(i credspec.Issuer) string {
-	s := strings.Join(nonEmpty(i.Type, i.Account), ", ")
+	s := strings.Join(nonEmpty(i.Type, i.Account, modeNote(i.Mode)), ", ")
 	if i.Console != "" {
 		s += fmt.Sprintf(" ([console](%s))", i.Console)
 	}
 	return s
+}
+
+// refs links each ID to its entry.
+func refs(ids []string) string {
+	out := make([]string, len(ids))
+	for i, d := range ids {
+		out[i] = fmt.Sprintf("[%s](#%s)", d, anchor(d))
+	}
+	return strings.Join(out, ", ")
+}
+
+func storesNote(p *credspec.Provisioner) string {
+	if p.Stores {
+		return "it stores the value"
+	}
+	return ""
+}
+
+func grantedBy(e credspec.Entitlement) string {
+	if e.GrantedBy == "" {
+		return ""
+	}
+	return "granted by " + e.GrantedBy
+}
+
+func backedUp(s credspec.Store) string {
+	if s.Backup == "" {
+		return ""
+	}
+	return "backed up by " + s.Backup
+}
+
+func modeNote(mode string) string {
+	if mode == "" {
+		return ""
+	}
+	return mode + " mode"
 }
 
 func nonEmpty(in ...string) []string {
