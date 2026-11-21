@@ -22,6 +22,9 @@ type Registry struct {
 	FormatVersion string `json:"formatVersion"`
 	// Credentials are the entries, in the order given.
 	Credentials []Credential `json:"credentials"`
+	// Prerequisites are what is set up at issuers before some credentials
+	// can be made, in the order given.
+	Prerequisites []Prerequisite `json:"prerequisites,omitempty"`
 }
 
 // NewRegistry returns a registry of the credentials, in the current
@@ -126,6 +129,41 @@ func (r *Registry) Validate() error {
 		}
 		validateCredential(&ps, id, c, ids)
 	}
+	for i, p := range r.Prerequisites {
+		id := p.ID
+		switch {
+		case id == "":
+			id = fmt.Sprintf("prerequisites[%d]", i)
+			ps.add(id, "id is required")
+		case !idPattern.MatchString(id):
+			ps.add(id, "id must match %s", IDPattern)
+		case ids[id]:
+			ps.add(id, "duplicate id")
+		}
+		if p.ID != "" {
+			ids[p.ID] = true
+		}
+	}
+	for i, p := range r.Prerequisites {
+		id := p.ID
+		if id == "" {
+			id = fmt.Sprintf("prerequisites[%d]", i)
+		}
+		validatePrerequisite(&ps, id, p, ids)
+	}
+	for i, c := range r.Credentials {
+		id := c.ID
+		if id == "" {
+			id = fmt.Sprintf("credentials[%d]", i)
+		}
+		references(&ps, id, "requires", c.ID, c.Requires, ids)
+		references(&ps, id, "rotation.secondaries", c.ID, c.Rotation.Secondaries, ids)
+	}
+	if len(ps) == 0 {
+		if _, err := r.SetupOrder(); err != nil {
+			ps.add("", "%v", err)
+		}
+	}
 	return ps.err()
 }
 
@@ -144,6 +182,19 @@ func validateCredential(ps *problems, id string, c Credential, ids map[string]bo
 	slug(ps, id, "issuer.type", c.Issuer.Type, true)
 	httpsURL(ps, id, "issuer.console", c.Issuer.Console)
 	closed(ps, id, "generation.method", c.Generation.Method, Methods(), true)
+	closed(ps, id, "need", c.Need, Needs(), false)
+	slug(ps, id, "issuer.mode", c.Issuer.Mode, false)
+	if p := c.Generation.Provisioner; p != nil {
+		if strings.TrimSpace(p.Tool) == "" || strings.TrimSpace(p.Command) == "" {
+			ps.add(id, "generation.provisioner needs a tool and a command")
+		}
+		closed(ps, id, "generation.provisioner.runBy", p.RunBy, Actors(), true)
+	}
+	for i, ch := range c.ConfigChanges {
+		if strings.TrimSpace(ch) == "" {
+			ps.add(id, "configChanges[%d] is empty", i)
+		}
+	}
 
 	for i, e := range c.Entitlements {
 		if strings.TrimSpace(e.Resource) == "" || strings.TrimSpace(e.Access) == "" {

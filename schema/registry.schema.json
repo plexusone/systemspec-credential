@@ -81,6 +81,17 @@
           ],
           "description": "Status is planned, active or retired."
         },
+        "need": {
+          "type": "string",
+          "description": "Need says when the credential must exist: for launch, later, only\nif an optional part is turned on, or only during a rotation."
+        },
+        "requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Requires lists the IDs of credentials and prerequisites that are set\nup before this one, such as the project an OAuth client lives in.\nDependsOn is for values this one is built from; Requires is only\norder."
+        },
         "sensitivity": {
           "type": "string",
           "enum": [
@@ -165,6 +176,13 @@
           "type": "string",
           "description": "Recovery says how to regain access when the value is lost, or that\nit cannot be."
         },
+        "configChanges": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "ConfigChanges are the edits a consumer's configuration needs before\nit reads the credential, such as a key that references the\nvariable. Turning on an optional credential means making them."
+        },
         "tags": {
           "items": {
             "type": "string"
@@ -209,6 +227,10 @@
         "note": {
           "type": "string",
           "description": "Note adds detail."
+        },
+        "grantedBy": {
+          "type": "string",
+          "description": "GrantedBy names what grants the access, such as the provisioning\ntool or the policy that sets it, so the entitlement can be checked\nagainst it."
         }
       },
       "additionalProperties": false,
@@ -250,6 +272,10 @@
           },
           "type": "array",
           "description": "Steps are the manual steps, in order."
+        },
+        "provisioner": {
+          "$ref": "#/$defs/Provisioner",
+          "description": "Provisioner is the tool that makes the value, when one does. A\nperson or an agent runs its command; the tool makes the value, so\nhandling.generate is system."
         }
       },
       "additionalProperties": false,
@@ -327,6 +353,10 @@
           "type": "string",
           "format": "uri",
           "description": "Console is the https URL where it is managed."
+        },
+        "mode": {
+          "type": "string",
+          "description": "Mode is the issuer's mode for this environment, such as ModeTest\nfor a payment provider's test keys, or another slug."
         }
       },
       "additionalProperties": false,
@@ -354,6 +384,119 @@
       ],
       "description": "Link is a titled https URL."
     },
+    "Prerequisite": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID is stable and unique among credentials and prerequisites."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name is the display name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description says what it is for."
+        },
+        "system": {
+          "type": "string",
+          "description": "System is the system it belongs to."
+        },
+        "environment": {
+          "type": "string",
+          "description": "Environment is \"prod\", \"staging\" and so on; empty when one serves\nevery environment."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "planned",
+            "active",
+            "retired"
+          ],
+          "description": "Status is planned until it is set up, then active."
+        },
+        "need": {
+          "type": "string",
+          "description": "Need says when it must exist."
+        },
+        "issuer": {
+          "$ref": "#/$defs/Issuer",
+          "description": "Issuer is the service it is set up at."
+        },
+        "steps": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Steps are how to set it up, in order."
+        },
+        "command": {
+          "type": "string",
+          "description": "Command sets it up, when one command does."
+        },
+        "done": {
+          "type": "string",
+          "description": "Done says how to tell it is set up."
+        },
+        "requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Requires lists the IDs set up before this one."
+        },
+        "links": {
+          "items": {
+            "$ref": "#/$defs/Link"
+          },
+          "type": "array",
+          "description": "Links point to documentation and consoles."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "system",
+        "status",
+        "issuer"
+      ],
+      "description": "Prerequisite is something at an issuer that is set up before a credential can be made, and is not itself a secret: a cloud project, an OAuth consent screen, a webhook endpoint."
+    },
+    "Provisioner": {
+      "properties": {
+        "tool": {
+          "type": "string",
+          "description": "Tool names the program, such as \"infra db-roles\"."
+        },
+        "command": {
+          "type": "string",
+          "description": "Command is the command line to run. Credentials with the same\ncommand are made by one run of it."
+        },
+        "runBy": {
+          "type": "string",
+          "enum": [
+            "human",
+            "agent",
+            "system"
+          ],
+          "description": "RunBy is who runs the command: a person, an agent, or a system such\nas a deploy workflow."
+        },
+        "stores": {
+          "type": "boolean",
+          "description": "Stores says the tool writes the value into the primary store itself,\nso there is nothing to install by hand."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "tool",
+        "command",
+        "runBy"
+      ],
+      "description": "Provisioner is a tool that makes a credential's value, and often stores it and sets it at the issuer, when its command runs."
+    },
     "Registry": {
       "properties": {
         "$schema": {
@@ -373,6 +516,13 @@
           },
           "type": "array",
           "description": "Credentials are the entries, in the order given."
+        },
+        "prerequisites": {
+          "items": {
+            "$ref": "#/$defs/Prerequisite"
+          },
+          "type": "array",
+          "description": "Prerequisites are what is set up at issuers before some credentials\ncan be made, in the order given."
         }
       },
       "additionalProperties": false,
@@ -406,6 +556,13 @@
         "impact": {
           "type": "string",
           "description": "Impact is what breaks, or who notices, when it rotates."
+        },
+        "secondaries": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Secondaries lists the IDs of credentials that exist only while this\none rotates, such as the previous value kept for verification. Their\nneed is NeedRotation."
         }
       },
       "additionalProperties": false,
@@ -430,6 +587,7 @@
             "pulumi-config",
             "host-file",
             "local-file",
+            "process-env",
             "none"
           ]
         },
@@ -461,6 +619,10 @@
         "note": {
           "type": "string",
           "description": "Note adds detail."
+        },
+        "backup": {
+          "type": "string",
+          "description": "Backup names what backs this store up, such as a backup job, when\nit is the only copy."
         }
       },
       "additionalProperties": false,

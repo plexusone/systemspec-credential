@@ -407,7 +407,7 @@ func TestAssess(t *testing.T) {
 }
 
 func TestListsAreComplete(t *testing.T) {
-	if len(States()) != 9 || len(EventTypes()) != 6 || len(Kinds()) != 13 || len(StoreTypes()) != 9 || len(Issuers()) != 8 {
+	if len(States()) != 9 || len(EventTypes()) != 6 || len(Kinds()) != 13 || len(StoreTypes()) != 10 || len(Issuers()) != 8 || len(Needs()) != 4 {
 		t.Error("a list changed size; update the documentation and the schema")
 	}
 	if len(NewRegistry(secret("a")).Credentials[0].Primary()) != 1 {

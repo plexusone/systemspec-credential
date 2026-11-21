@@ -5,4 +5,5 @@
 coverage.txt
 *.test
 /credspec
+!/credspec/
 site/

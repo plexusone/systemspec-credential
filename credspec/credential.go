@@ -29,6 +29,14 @@ type Credential struct {
 	Kind string `json:"kind"`
 	// Status is planned, active or retired.
 	Status Status `json:"status"`
+	// Need says when the credential must exist: for launch, later, only
+	// if an optional part is turned on, or only during a rotation.
+	Need Need `json:"need,omitempty"`
+	// Requires lists the IDs of credentials and prerequisites that are set
+	// up before this one, such as the project an OAuth client lives in.
+	// DependsOn is for values this one is built from; Requires is only
+	// order.
+	Requires []string `json:"requires,omitempty"`
 	// Sensitivity is how much harm a leak does.
 	Sensitivity Sensitivity `json:"sensitivity,omitempty"`
 	// Owner is the person or role who creates and rotates it.
@@ -66,6 +74,10 @@ type Credential struct {
 	// Recovery says how to regain access when the value is lost, or that
 	// it cannot be.
 	Recovery string `json:"recovery,omitempty"`
+	// ConfigChanges are the edits a consumer's configuration needs before
+	// it reads the credential, such as a key that references the
+	// variable. Turning on an optional credential means making them.
+	ConfigChanges []string `json:"configChanges,omitempty"`
 	// Tags are free labels.
 	Tags []string `json:"tags,omitempty"`
 	// Links point to documentation and consoles.
@@ -141,7 +153,18 @@ type Issuer struct {
 	Account string `json:"account,omitempty"`
 	// Console is the https URL where it is managed.
 	Console string `json:"console,omitempty"`
+	// Mode is the issuer's mode for this environment, such as ModeTest
+	// for a payment provider's test keys, or another slug.
+	Mode string `json:"mode,omitempty"`
 }
+
+// Well-known issuer modes. Other lowercase slugs are allowed.
+const (
+	// ModeTest is an issuer's test or sandbox mode, where nothing is real.
+	ModeTest = "test"
+	// ModeLive is an issuer's live mode.
+	ModeLive = "live"
+)
 
 // Well-known issuer types. Other lowercase slugs are allowed.
 const (
@@ -176,6 +199,26 @@ type Generation struct {
 	Command string `json:"command,omitempty"`
 	// Steps are the manual steps, in order.
 	Steps []string `json:"steps,omitempty"`
+	// Provisioner is the tool that makes the value, when one does. A
+	// person or an agent runs its command; the tool makes the value, so
+	// handling.generate is system.
+	Provisioner *Provisioner `json:"provisioner,omitempty"`
+}
+
+// Provisioner is a tool that makes a credential's value, and often stores
+// it and sets it at the issuer, when its command runs.
+type Provisioner struct {
+	// Tool names the program, such as "infra db-roles".
+	Tool string `json:"tool"`
+	// Command is the command line to run. Credentials with the same
+	// command are made by one run of it.
+	Command string `json:"command"`
+	// RunBy is who runs the command: a person, an agent, or a system such
+	// as a deploy workflow.
+	RunBy Actor `json:"runBy"`
+	// Stores says the tool writes the value into the primary store itself,
+	// so there is nothing to install by hand.
+	Stores bool `json:"stores,omitempty"`
 }
 
 // Method is how a value comes to exist.
@@ -209,6 +252,10 @@ type Entitlement struct {
 	Access string `json:"access"`
 	// Note adds detail.
 	Note string `json:"note,omitempty"`
+	// GrantedBy names what grants the access, such as the provisioning
+	// tool or the policy that sets it, so the entitlement can be checked
+	// against it.
+	GrantedBy string `json:"grantedBy,omitempty"`
 }
 
 // Store is one place a value is kept.
@@ -229,6 +276,9 @@ type Store struct {
 	Install string `json:"install,omitempty"`
 	// Note adds detail.
 	Note string `json:"note,omitempty"`
+	// Backup names what backs this store up, such as a backup job, when
+	// it is the only copy.
+	Backup string `json:"backup,omitempty"`
 }
 
 // Well-known store types. Other lowercase slugs are allowed.
@@ -243,7 +293,11 @@ const (
 	StoreHostFile = "host-file"
 	// StoreLocalFile is a file on an operator's machine.
 	StoreLocalFile = "local-file"
-	// StoreNone is for federated credentials, which have no stored value.
+	// StoreProcessEnv is a process's environment, set by whatever starts
+	// it, such as a migration step.
+	StoreProcessEnv = "process-env"
+	// StoreNone is for a value that is never stored: a federated
+	// credential, or a token exported in a shell for one run.
 	StoreNone = "none"
 )
 
@@ -251,7 +305,7 @@ const (
 func StoreTypes() []string {
 	return []string{
 		StoreAWSSSM, StoreAWSSecretsManager, StoreAWSKMS, StoreGitHubActions,
-		StorePasswordManager, StorePulumiConfig, StoreHostFile, StoreLocalFile, StoreNone,
+		StorePasswordManager, StorePulumiConfig, StoreHostFile, StoreLocalFile, StoreProcessEnv, StoreNone,
 	}
 }
 
@@ -294,6 +348,10 @@ type Rotation struct {
 	Procedure string `json:"procedure,omitempty"`
 	// Impact is what breaks, or who notices, when it rotates.
 	Impact string `json:"impact,omitempty"`
+	// Secondaries lists the IDs of credentials that exist only while this
+	// one rotates, such as the previous value kept for verification. Their
+	// need is NeedRotation.
+	Secondaries []string `json:"secondaries,omitempty"`
 }
 
 // Policy is when a credential rotates.
