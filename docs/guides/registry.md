@@ -24,6 +24,8 @@ conventionally `system/environment/NAME`, using letters, digits and
 | `environment` | | `prod`, `staging` and so on; empty for one shared by every environment |
 | `kind` | yes | What it is; see [Kinds](#kinds) |
 | `status` | yes | `planned`, `active` or `retired` |
+| `need` | | When it must exist: `launch`, `later`, `optional` (only when an optional part is turned on) or `rotation` (only while another credential rotates) |
+| `requires` | | IDs of credentials and [prerequisites](#prerequisites) set up before this one |
 | `sensitivity` | | `low`, `medium`, `high` or `critical` |
 | `owner` | yes | The person or role who creates and rotates it |
 | `tags`, `links` | | Free labels, and `title` plus `url` links |
@@ -31,7 +33,9 @@ conventionally `system/environment/NAME`, using letters, digits and
 ### Where It Comes From
 
 `issuer` is who issues the value: `type` (such as `self`, `aws`, `github`),
-`account`, and `console`, the URL where a person manages it.
+`account`, `console`, the URL where a person manages it, and `mode`, such
+as `test` or `live` for a payment provider whose staging keys are test
+keys.
 
 `generation` is how the value is made:
 
@@ -42,6 +46,12 @@ conventionally `system/environment/NAME`, using letters, digits and
 | `where` | Where it is made, such as "the operator's machine, straight into the parameter store" |
 | `command` | The command that makes it |
 | `steps` | Console steps, in order, when there is no command |
+| `provisioner` | The tool that makes the value when its command runs: `tool`, `command`, `runBy` (who runs it) and `stores` (it writes the primary store itself) |
+
+With a `provisioner`, the tool generates the value, so `handling.generate`
+is `system`, and `runBy` says whether a person, an agent or a system runs
+the command. Credentials that share a command are made by one run of it:
+the plan and the review page show the command once.
 
 ### Where It Lives and Who Uses It
 
@@ -57,16 +67,23 @@ an `account`, a `console` and a `role`:
 
 `install` says, in a sentence or a command, how the value gets into that
 store. The reports put it in each credential's next step, so write it for
-the person who will do it.
+the person who will do it. `backup` names what backs the store up, such as
+a backup job, when it holds the only copy. The `process-env` store type is
+a process's environment, set by whatever starts it, and `none` is a value
+never stored: a federated credential, or a token exported in a shell for
+one run.
 
 `consumers` lists who reads it: `system`, `component`, and `via`, such as
-`env SESSION_KEY`.
+`env SESSION_KEY`. `configChanges` lists the edits a consumer's
+configuration needs before it reads the value, such as a key that
+references the variable; turning on an optional credential means making
+them.
 
 ### What It Can Do
 
 | Field | Meaning |
 |---|---|
-| `entitlements` | What the issuer grants it: `resource`, `access`, `note`, such as a token's scopes |
+| `entitlements` | What the issuer grants it: `resource`, `access`, `note`, such as a token's scopes, and `grantedBy`, the tool or policy that grants it, so the entitlement can be checked against it |
 | `exposure` | What a holder of the value can do, in a sentence |
 | `revocation` | How to revoke it quickly |
 | `dependsOn` | IDs it is built from, such as a connection string from a password |
@@ -87,7 +104,9 @@ credentials expose this one.
 | `on-demand` | Only on compromise or need |
 
 `procedure` and `impact` describe how a rotation is done and what it
-interrupts.
+interrupts. `secondaries` lists the IDs of credentials that exist only
+during a rotation, such as the previous value kept for verification; give
+each `need: rotation`.
 
 `handling` says who does each stage:
 
@@ -118,6 +137,21 @@ code-hosting organization or a cloud root user, is an entry of kind
 list in `reaches` what it controls. The plan lists every account's
 protections, and a `verified` event ticks them off.
 
+## Prerequisites
+
+`prerequisites`, beside `credentials` at the top of the registry, lists
+what is set up at an issuer before some credentials can be made, and
+holds no secret: a cloud project, an OAuth consent screen, a webhook
+endpoint. Each has an `id` (unique among credentials and prerequisites),
+`name`, `system`, `environment`, `status` (`planned` until it is set up,
+then `active`), `need`, `issuer`, `steps` or a `command`, `done` (how to
+tell it is set up), `requires` and `links`.
+
+A credential lists the prerequisites it needs in `requires`.
+`Registry.SetupOrder` puts every entry after what it requires and what it
+depends on, and the plan lists the prerequisites still planned before its
+launch checklist.
+
 ## Kinds
 
 `kind`, `issuer.type` and `stores[].type` are open sets: any lowercase
@@ -132,7 +166,8 @@ schema suggest.
   `postgres`, `stripe`, `registrar`.
 - **store type:** `aws-ssm`, `aws-secrets-manager`, `aws-kms`,
   `github-actions`, `password-manager`, `pulumi-config`, `host-file`,
-  `local-file`, `none`.
+  `local-file`, `process-env`, `none`.
+- **issuer mode:** `test`, `live`.
 
 ## Validation
 
@@ -144,7 +179,21 @@ ID:
 - every credential has a `primary` store, unless federated;
 - `scheduled` has `intervalDays` above zero, and other policies have none;
 - `dependsOn` and `reaches` name existing IDs, never the entry itself;
+- `requires` and `rotation.secondaries` name existing credentials or
+  prerequisites, and the setup order has no cycle;
+- a `provisioner` has a tool, a command and who runs it;
 - link and console URLs are absolute `https` URLs.
 
 A registry file refuses unknown fields, so a misspelled field is an error
 rather than silently ignored.
+
+It then prints advice: entries that are valid but likely to mislead
+whoever sets them up. `--strict` fails on advice too.
+
+- a provisioned credential whose `handling.generate` is not `system`, or
+  whose provisioner stores the value while an `install` asks for it by
+  hand;
+- a credential with no entitlements, unless federated;
+- a rotation procedure naming a variable that no credential, consumer or
+  configuration change defines;
+- a rotation secondary whose `need` is not `rotation`.

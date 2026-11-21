@@ -23,7 +23,15 @@
 - [x] **RMI-OMNICREDENTIAL-025** Work progress: to create, to deploy, deployed, from a deployed event, with each credential's next step in every report
 - [x] **RMI-OMNICREDENTIAL-026** Agent actor: an AI agent acting for an operator as a third kind of handler, counted in every report
 
-## Phase 3: Observed State
+## Phase 3: Setup Guidance
+
+- [x] **RMI-OMNICREDENTIAL-027** Need and order: when each credential must exist (`need`), what is set up first (`requires`) and a setup order over both
+- [x] **RMI-OMNICREDENTIAL-028** Provisioners: the tool and command that make a value, who runs it, and whether it stores the value
+- [x] **RMI-OMNICREDENTIAL-029** Prerequisites: what is set up at an issuer before a credential, with steps and a done state
+- [x] **RMI-OMNICREDENTIAL-030** Setup details: entitlements granted by, issuer mode, configuration changes, rotation secondaries, store backups and the process environment store
+- [x] **RMI-OMNICREDENTIAL-031** Advice: valid entries likely to mislead, printed by validate, with a strict mode
+
+## Phase 4: Observed State
 
 - [ ] **RMI-OMNICREDENTIAL-011** Observer interface: what a store reports about a path without its value
 - [ ] **RMI-OMNICREDENTIAL-012** Checks: missing, unlisted, and expiry from the issuer
@@ -31,7 +39,7 @@
 - [ ] **RMI-OMNICREDENTIAL-014** Observer for CI secrets and token expiry
 - [ ] **RMI-OMNICREDENTIAL-015** Entitlement checks where the issuer reports them
 
-## Phase 4: Lifecycle Automation
+## Phase 5: Lifecycle Automation
 
 - [ ] **RMI-OMNICREDENTIAL-016** Generate random values straight into a store
 - [ ] **RMI-OMNICREDENTIAL-017** Rotation reminders from the due and expiring states

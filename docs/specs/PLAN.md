@@ -10,8 +10,9 @@ with a usable release.
 |---|---|---|
 | 1. Registry | Types, validation, event log, state, JSON, schemas | v0.1.0 with phase 2 |
 | 2. Reports and command line | HTML, Markdown and JSON reports; the mountable commands; the standalone command | v0.1.0 |
-| 3. Observed state | An observer interface and checks for missing, unlisted and expired credentials; observers for a cloud parameter store and CI secrets | v0.2.0 |
-| 4. Lifecycle automation | Random values generated into a store; rotation reminders; findings as OCSF events; an MCP server | v0.3.0 |
+| 3. Setup guidance | When each credential is needed and in what order, provisioners, prerequisites, setup details and advice | v0.3.0 |
+| 4. Observed state | An observer interface and checks for missing, unlisted and expired credentials; observers for a cloud parameter store and CI secrets | later |
+| 5. Lifecycle automation | Random values generated into a store; rotation reminders; findings as OCSF events; an MCP server | later |
 
 ## Design Decisions
 
@@ -34,6 +35,6 @@ with a usable release.
 
 | Risk | Mitigation |
 |---|---|
-| The registry drifts from the stores | Phase 3 compares them; until then the event log and `verified` events |
+| The registry drifts from the stores | Phase 4 compares them; until then the event log and `verified` events |
 | Operators forget to record events | `unrecorded` is a state of its own, shown first |
 | The report leaks an inventory | It holds no values; it is kept beside the registry, never published |
