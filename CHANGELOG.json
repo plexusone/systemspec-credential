@@ -10,6 +10,79 @@
   ],
   "releases": [
     {
+      "version": "v0.3.0",
+      "date": "2026-11-21",
+      "highlights": [
+        {
+          "description": "Setup guidance: when each credential is needed and in what order, the tool that makes it, what is set up at an issuer first, and advice on entries likely to mislead"
+        }
+      ],
+      "added": [
+        {
+          "description": "`need` (`launch`, `later`, `optional`, `rotation`) and `requires`, with `Registry.SetupOrder`, which lists every entry after what it requires and depends on",
+          "commit": "fbd52e8",
+          "rmis": [
+            "RMI-OMNICREDENTIAL-027"
+          ]
+        },
+        {
+          "description": "`generation.provisioner`: the tool and command that make a value, who runs it and whether it stores it; `Credential.SetUpBy` gives who acts",
+          "commit": "fbd52e8",
+          "rmis": [
+            "RMI-OMNICREDENTIAL-028"
+          ]
+        },
+        {
+          "description": "`prerequisites`: what is set up at an issuer before a credential, holding no secret, with steps, a command and a done state",
+          "commit": "fbd52e8",
+          "rmis": [
+            "RMI-OMNICREDENTIAL-029"
+          ]
+        },
+        {
+          "description": "`entitlements[].grantedBy`, `issuer.mode` (`test`, `live`), `stores[].backup`, `rotation.secondaries`, `configChanges` and the `process-env` store type",
+          "commit": "fbd52e8",
+          "rmis": [
+            "RMI-OMNICREDENTIAL-030"
+          ]
+        },
+        {
+          "description": "`Registry.Lint` returns advice on valid entries likely to mislead; `validate` prints it and fails on it with `--strict`",
+          "commit": "3d0a334",
+          "rmis": [
+            "RMI-OMNICREDENTIAL-031"
+          ]
+        },
+        {
+          "description": "The plan lists planned prerequisites before its launch checklist and gives provisioned credentials their command; the reference shows every new field",
+          "commit": "9e7a06b",
+          "rmis": [
+            "RMI-OMNICREDENTIAL-027",
+            "RMI-OMNICREDENTIAL-028",
+            "RMI-OMNICREDENTIAL-029",
+            "RMI-OMNICREDENTIAL-030"
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "description": "The plan's launch checklist counts a provisioned credential as by hand when a person runs its command, orders by `requires` as well as `dependsOn`, and leaves out credentials needed only during a rotation",
+          "commit": "9e7a06b",
+          "rmis": [
+            "RMI-OMNICREDENTIAL-027",
+            "RMI-OMNICREDENTIAL-028"
+          ]
+        },
+        {
+          "description": "`validate` reports the prerequisites it checked: \"N credentials, N prerequisites and N events OK\"",
+          "commit": "3d0a334",
+          "rmis": [
+            "RMI-OMNICREDENTIAL-031"
+          ]
+        }
+      ]
+    },
+    {
       "version": "v0.2.0",
       "date": "2026-11-20",
       "highlights": [
