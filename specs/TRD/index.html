@@ -946,6 +946,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../releases/v0.2.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v0.2.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../releases/v0.1.0/" class="md-nav__link">
         
   
@@ -1272,7 +1300,7 @@ both from one function.</p>
 <tr>
 <td><code>handling</code></td>
 <td>object</td>
-<td><code>generate</code>, <code>distribute</code>, <code>rotate</code> (each <code>human</code> or <code>system</code>), <code>automation</code></td>
+<td><code>generate</code>, <code>distribute</code>, <code>rotate</code> (each <code>human</code>, <code>agent</code> or <code>system</code>), <code>automation</code></td>
 </tr>
 <tr>
 <td><code>revocation</code></td>
@@ -1508,8 +1536,9 @@ the next date that matters.</p>
 <h2 id="reports">Reports<a class="headerlink" href="#reports" title="Permanent link">&para;</a></h2>
 <p>All three are built from the same rows: each credential, its record,
 its assessment and its events. Each counts the credentials that need a
-person for at least one stage, those handled entirely by systems, and
-each stage's human and system counts, the scheduled rotations a person
+person for at least one stage, those that need an agent but no person,
+those handled entirely by systems, and each stage's human, agent and
+system counts, the scheduled rotations a person
 does in a year (the sum of 365 / interval), and how many a person rotates
 at the issuer's expiry. Each row lists what it exposes and what exposes
 it.</p>

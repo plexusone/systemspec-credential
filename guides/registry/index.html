@@ -941,6 +941,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../releases/v0.2.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v0.2.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../releases/v0.1.0/" class="md-nav__link">
         
   
@@ -1328,7 +1356,29 @@ credentials expose this one.</p>
 </table>
 <p><code>procedure</code> and <code>impact</code> describe how a rotation is done and what it
 interrupts.</p>
-<p><code>handling</code> says who does each stage, <code>human</code> or <code>system</code>:</p>
+<p><code>handling</code> says who does each stage:</p>
+<table>
+<thead>
+<tr>
+<th>Actor</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>human</code></td>
+<td>A person, by hand: a console, or a command they run</td>
+</tr>
+<tr>
+<td><code>agent</code></td>
+<td>An AI agent acting for an operator, such as a coding agent running a command; the operator approves what it cannot undo</td>
+</tr>
+<tr>
+<td><code>system</code></td>
+<td>A deterministic program, such as a deploy tool or a CI workflow, with no person or agent involved</td>
+</tr>
+</tbody>
+</table>
 <table>
 <thead>
 <tr>
@@ -1353,7 +1403,9 @@ interrupts.</p>
 </table>
 <p><code>automation</code> names the systems doing the <code>system</code> stages. The reports
 count how many credentials need a person for at least one stage, how many
-are fully automatic, and how many rotations a person does in a year.</p>
+need an agent but no person, how many are fully automatic, and how many
+rotations a person does in a year. <code>Handling.Responsible</code> gives the most
+hands-on actor of the three stages.</p>
 <h3 id="accounts">Accounts<a class="headerlink" href="#accounts" title="Permanent link">&para;</a></h3>
 <p>A person's login that controls other credentials, such as the owner of a
 code-hosting organization or a cloud root user, is an entry of kind
