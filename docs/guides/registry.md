@@ -89,7 +89,13 @@ credentials expose this one.
 `procedure` and `impact` describe how a rotation is done and what it
 interrupts.
 
-`handling` says who does each stage, `human` or `system`:
+`handling` says who does each stage:
+
+| Actor | Meaning |
+|---|---|
+| `human` | A person, by hand: a console, or a command they run |
+| `agent` | An AI agent acting for an operator, such as a coding agent running a command; the operator approves what it cannot undo |
+| `system` | A deterministic program, such as a deploy tool or a CI workflow, with no person or agent involved |
 
 | Stage | Meaning |
 |---|---|
@@ -99,7 +105,9 @@ interrupts.
 
 `automation` names the systems doing the `system` stages. The reports
 count how many credentials need a person for at least one stage, how many
-are fully automatic, and how many rotations a person does in a year.
+need an agent but no person, how many are fully automatic, and how many
+rotations a person does in a year. `Handling.Responsible` gives the most
+hands-on actor of the three stages.
 
 ### Accounts
 

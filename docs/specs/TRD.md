@@ -36,7 +36,7 @@ both from one function.
 | `stores` | list | `type` (slug), `role` (enum), `account`, `path`, `console` (URL), `install` (how the value gets there), `note` |
 | `consumers` | list | `system`, `component`, `via`, `note` |
 | `rotation` | object | `policy` (enum), `intervalDays`, `procedure`, `impact` |
-| `handling` | object | `generate`, `distribute`, `rotate` (each `human` or `system`), `automation` |
+| `handling` | object | `generate`, `distribute`, `rotate` (each `human`, `agent` or `system`), `automation` |
 | `revocation` | string | How to revoke it quickly |
 | `exposure` | string | What a holder of the value can do |
 | `dependsOn` | list | IDs this one is derived from, such as a DSN from a password |
@@ -152,8 +152,9 @@ The default warning window is 30 days.
 
 All three are built from the same rows: each credential, its record,
 its assessment and its events. Each counts the credentials that need a
-person for at least one stage, those handled entirely by systems, and
-each stage's human and system counts, the scheduled rotations a person
+person for at least one stage, those that need an agent but no person,
+those handled entirely by systems, and each stage's human, agent and
+system counts, the scheduled rotations a person
 does in a year (the sum of 365 / interval), and how many a person rotates
 at the issuer's expiry. Each row lists what it exposes and what exposes
 it.
