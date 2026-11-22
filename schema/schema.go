@@ -125,6 +125,8 @@ func enums(t reflect.Type) *jsonschema.Schema {
 		values = anys(credspec.Sensitivities())
 	case reflect.TypeFor[credspec.Method]():
 		values = anys(credspec.Methods())
+	case reflect.TypeFor[credspec.Format]():
+		values = anys(credspec.Formats())
 	case reflect.TypeFor[credspec.Role]():
 		values = anys(credspec.Roles())
 	case reflect.TypeFor[credspec.Policy]():

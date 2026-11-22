@@ -141,6 +141,27 @@ func TestValidateDerivedNeedsDependencies(t *testing.T) {
 	wantProblem(t, problemsOf(t, NewRegistry(c).Validate()), "lists what it depends on")
 }
 
+func TestValidateFormat(t *testing.T) {
+	c := secret("a")
+	c.Generation.Format = FormatHex32
+	if err := NewRegistry(c).Validate(); err != nil {
+		t.Fatalf("a random hex32 secret: %v", err)
+	}
+	c.Generation.Format = "hex64"
+	wantProblem(t, problemsOf(t, NewRegistry(c).Validate()), `generation.format "hex64" is not one of`)
+	c.Generation.Format = FormatP256PEM
+	wantProblem(t, problemsOf(t, NewRegistry(c).Validate()), "generation.method must be keypair")
+	c.Generation.Method = MethodKeypair
+	if err := NewRegistry(c).Validate(); err != nil {
+		t.Fatalf("a P-256 key pair: %v", err)
+	}
+	c.Generation.Format = FormatBase64URL32
+	wantProblem(t, problemsOf(t, NewRegistry(c).Validate()), "generation.method must be random")
+	if !FormatHex32.Random() || FormatEd25519PEM.Random() || len(Formats()) != 5 {
+		t.Error("Formats or Random changed; update the documentation and the schema")
+	}
+}
+
 func TestValidateBadID(t *testing.T) {
 	wantProblem(t, problemsOf(t, NewRegistry(secret("has space")).Validate()), "id must match")
 }

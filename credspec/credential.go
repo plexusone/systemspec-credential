@@ -192,6 +192,10 @@ type Generation struct {
 	// Spec describes the value, such as "32 random bytes, hex" or
 	// "RSA 3072, PEM".
 	Spec string `json:"spec,omitempty"`
+	// Format is the value's exact form, such as FormatHex32, for a random
+	// value or a key a tool can make. Spec stays the description people
+	// read.
+	Format Format `json:"format,omitempty"`
 	// Where is the place it is generated, such as "the operator's
 	// machine" or a console page.
 	Where string `json:"where,omitempty"`
@@ -238,6 +242,31 @@ const (
 	// to the issuer each time, as with OIDC role assumption.
 	MethodFederated Method = "federated"
 )
+
+// Format is the exact form of a value a tool makes.
+type Format string
+
+// Formats a tool can make.
+const (
+	// FormatHex32 is 32 random bytes, hex encoded: 64 characters.
+	FormatHex32 Format = "hex32"
+	// FormatBase64URL32 is 32 random bytes, base64url without padding.
+	FormatBase64URL32 Format = "base64url32"
+	// FormatP256PEM is a P-256 private key, PKCS #8, PEM.
+	FormatP256PEM Format = "p256-pem"
+	// FormatEd25519PEM is an Ed25519 private key, PKCS #8, PEM.
+	FormatEd25519PEM Format = "ed25519-pem"
+	// FormatRSA3072PEM is an RSA 3072-bit private key, PKCS #8, PEM.
+	FormatRSA3072PEM Format = "rsa3072-pem"
+)
+
+// Formats lists every Format.
+func Formats() []Format {
+	return []Format{FormatHex32, FormatBase64URL32, FormatP256PEM, FormatEd25519PEM, FormatRSA3072PEM}
+}
+
+// Random reports whether f is random bytes rather than a key.
+func (f Format) Random() bool { return f == FormatHex32 || f == FormatBase64URL32 }
 
 // Methods lists every Method.
 func Methods() []Method {

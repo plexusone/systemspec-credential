@@ -182,6 +182,15 @@ func validateCredential(ps *problems, id string, c Credential, ids map[string]bo
 	slug(ps, id, "issuer.type", c.Issuer.Type, true)
 	httpsURL(ps, id, "issuer.console", c.Issuer.Console)
 	closed(ps, id, "generation.method", c.Generation.Method, Methods(), true)
+	closed(ps, id, "generation.format", c.Generation.Format, Formats(), false)
+	if f := c.Generation.Format; f != "" {
+		switch {
+		case f.Random() && c.Generation.Method != MethodRandom:
+			ps.add(id, "generation.format %q is random bytes; generation.method must be random", f)
+		case !f.Random() && slices.Contains(Formats(), f) && c.Generation.Method != MethodKeypair:
+			ps.add(id, "generation.format %q is a key; generation.method must be keypair", f)
+		}
+	}
 	closed(ps, id, "need", c.Need, Needs(), false)
 	slug(ps, id, "issuer.mode", c.Issuer.Mode, false)
 	if p := c.Generation.Provisioner; p != nil {

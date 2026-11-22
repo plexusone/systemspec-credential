@@ -258,6 +258,17 @@
           "type": "string",
           "description": "Spec describes the value, such as \"32 random bytes, hex\" or\n\"RSA 3072, PEM\"."
         },
+        "format": {
+          "type": "string",
+          "enum": [
+            "hex32",
+            "base64url32",
+            "p256-pem",
+            "ed25519-pem",
+            "rsa3072-pem"
+          ],
+          "description": "Format is the value's exact form, such as FormatHex32, for a random\nvalue or a key a tool can make. Spec stays the description people\nread."
+        },
         "where": {
           "type": "string",
           "description": "Where is the place it is generated, such as \"the operator's\nmachine\" or a console page."
