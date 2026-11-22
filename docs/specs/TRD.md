@@ -76,6 +76,10 @@ Closed sets:
 
 - **generation method:** `random`, `keypair`, `issued`, `derived`,
   `federated`.
+- **generation format**, optional, the exact form of a value a tool makes:
+  `hex32` and `base64url32` (32 random bytes, for method `random`);
+  `p256-pem`, `ed25519-pem` and `rsa3072-pem` (a PKCS #8 private key, for
+  method `keypair`). `spec` stays the description people read.
 - **store role:** `primary` (the source of truth), `backup` (an offline
   copy), `rendered` (written from the primary at deploy time).
 - **rotation policy:** `scheduled` (every `intervalDays`), `on-expiry`
@@ -94,6 +98,8 @@ Closed sets:
 - Closed sets hold only their values; open sets are slugs.
 - At least one store with role `primary`, unless the method is
   `federated`.
+- A random-bytes `generation.format` needs method `random`; a key format
+  needs method `keypair`.
 - `scheduled` requires `intervalDays` > 0; other policies forbid it.
 - `dependsOn` and `reaches` name existing IDs and never the entry itself.
 - `requires` and `rotation.secondaries` name existing credentials or

@@ -41,6 +41,7 @@
 
 ## Phase 5: Lifecycle Automation
 
+- [x] **RMI-OMNICREDENTIAL-032** Value format: `generation.format`, the exact form of a random value or key, so a tool can make it
 - [ ] **RMI-OMNICREDENTIAL-016** Generate random values straight into a store
 - [ ] **RMI-OMNICREDENTIAL-017** Rotation reminders from the due and expiring states
 - [ ] **RMI-OMNICREDENTIAL-018** Findings as OCSF events

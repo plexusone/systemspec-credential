@@ -55,7 +55,7 @@ one place for one environment. This is the smallest useful entry:
       "status": "planned",
       "owner": "platform team",
       "issuer": { "type": "self" },
-      "generation": { "method": "random", "command": "openssl rand -hex 32" },
+      "generation": { "method": "random", "format": "hex32", "command": "openssl rand -hex 32" },
       "stores": [
         { "type": "aws-ssm", "role": "primary", "path": "/example/prod/SESSION_KEY" }
       ],
