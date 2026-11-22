@@ -1413,6 +1413,10 @@ makes the value, else <code>handling.generate</code>.</p>
 <ul>
 <li><strong>generation method:</strong> <code>random</code>, <code>keypair</code>, <code>issued</code>, <code>derived</code>,
   <code>federated</code>.</li>
+<li><strong>generation format</strong>, optional, the exact form of a value a tool makes:
+  <code>hex32</code> and <code>base64url32</code> (32 random bytes, for method <code>random</code>);
+  <code>p256-pem</code>, <code>ed25519-pem</code> and <code>rsa3072-pem</code> (a PKCS #8 private key, for
+  method <code>keypair</code>). <code>spec</code> stays the description people read.</li>
 <li><strong>store role:</strong> <code>primary</code> (the source of truth), <code>backup</code> (an offline
   copy), <code>rendered</code> (written from the primary at deploy time).</li>
 <li><strong>rotation policy:</strong> <code>scheduled</code> (every <code>intervalDays</code>), <code>on-expiry</code>
@@ -1431,6 +1435,8 @@ makes the value, else <code>handling.generate</code>.</p>
 <li>Closed sets hold only their values; open sets are slugs.</li>
 <li>At least one store with role <code>primary</code>, unless the method is
   <code>federated</code>.</li>
+<li>A random-bytes <code>generation.format</code> needs method <code>random</code>; a key format
+  needs method <code>keypair</code>.</li>
 <li><code>scheduled</code> requires <code>intervalDays</code> &gt; 0; other policies forbid it.</li>
 <li><code>dependsOn</code> and <code>reaches</code> name existing IDs and never the entry itself.</li>
 <li><code>requires</code> and <code>rotation.secondaries</code> name existing credentials or
