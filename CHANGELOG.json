@@ -10,6 +10,15 @@
   ],
   "releases": [
     {
+      "version": "v0.4.1",
+      "date": "2026-11-25",
+      "fixed": [
+        {
+          "description": "`record` with a pattern no longer records `deployed` or `verified` for credentials with no value: planned ones not yet created, and retired or revoked ones. It lists what it skipped, and fails when nothing matched has a value"
+        }
+      ]
+    },
+    {
       "version": "v0.4.0",
       "date": "2026-11-22",
       "highlights": [
