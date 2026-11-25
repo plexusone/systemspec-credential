@@ -880,6 +880,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../releases/v0.4.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v0.4.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../releases/v0.4.0/" class="md-nav__link">
         
   
@@ -1150,6 +1178,9 @@ expiry, because the new value has none.</p>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>credspec<span class="w"> </span>record<span class="w"> </span>example-org/github-owner<span class="w"> </span>verified<span class="w"> </span>--note<span class="w"> </span><span class="s2">&quot;hardware key checked&quot;</span>
 </code></pre></div>
 <ul>
+<li>A pattern records every credential it matches. For <code>deployed</code> and
+  <code>verified</code> it skips those with no value: planned ones not yet created,
+  and retired or revoked ones, and lists them.</li>
 <li><code>--at</code> records something that happened earlier, as a date or an RFC 3339
   time; the default is now.</li>
 <li><code>*</code> in the ID matches any text, slashes included, so one command records

@@ -880,6 +880,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../releases/v0.4.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v0.4.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../releases/v0.4.0/" class="md-nav__link">
         
   
@@ -1163,7 +1191,8 @@ entitled to do and what its leak exposes.</p>
 </li>
 <li>
 <p><strong>Deploy</strong> it where its consumers read it, and record that too. A
-   pattern records many at once:</p>
+   pattern records many at once, skipping the credentials with no value
+   to deploy: planned ones not yet created, and retired ones:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>credspec<span class="w"> </span>record<span class="w"> </span><span class="s1">&#39;example-app/prod/*&#39;</span><span class="w"> </span>deployed<span class="w"> </span>--by<span class="w"> </span>deploy
 </code></pre></div>
 </li>
