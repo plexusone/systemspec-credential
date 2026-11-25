@@ -92,7 +92,7 @@ credspec report   --format html -o credentials.html --registry credentials.json 
 | `validate` | Checks the registry and the event log, and prints advice on entries likely to mislead (`--strict` fails on it) |
 | `status` | Lists credentials needing attention; fails on `--fail-on` states (default `expired,overdue`); `--manual` for only those with a step by hand |
 | `report` | Writes `--format html`, `markdown`, `plan`, `ics` or `json` |
-| `record <id-or-pattern> <type>` | Adds a `created`, `rotated`, `expires`, `deployed`, `verified` or `revoked` event; `'app/prod/*'` records every match |
+| `record <id-or-pattern> <type>` | Adds a `created`, `rotated`, `expires`, `deployed`, `verified` or `revoked` event; `'app/prod/*'` records every match, and for `deployed` or `verified` skips those not yet created or retired |
 | `export` | Writes the registry as JSON |
 | `schema <registry\|events>` | Writes a JSON Schema |
 

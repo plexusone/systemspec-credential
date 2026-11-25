@@ -30,6 +30,9 @@ credspec record 'example-app/prod/*' deployed --by deploy
 credspec record example-org/github-owner verified --note "hardware key checked"
 ```
 
+- A pattern records every credential it matches. For `deployed` and
+  `verified` it skips those with no value: planned ones not yet created,
+  and retired or revoked ones, and lists them.
 - `--at` records something that happened earlier, as a date or an RFC 3339
   time; the default is now.
 - `*` in the ID matches any text, slashes included, so one command records

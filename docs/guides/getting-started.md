@@ -87,7 +87,8 @@ entitled to do and what its leak exposes.
     Then change its `status` to `active`.
 
 4. **Deploy** it where its consumers read it, and record that too. A
-   pattern records many at once:
+   pattern records many at once, skipping the credentials with no value
+   to deploy: planned ones not yet created, and retired ones:
 
     ```bash
     credspec record 'example-app/prod/*' deployed --by deploy
