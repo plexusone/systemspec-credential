@@ -209,3 +209,43 @@ func TestParseTime(t *testing.T) {
 		t.Errorf("date = %v, %v", got, err)
 	}
 }
+
+func TestRecordPatternSkipsCredentialsWithoutValues(t *testing.T) {
+	reg := registry()
+	planned, retired := reg.Credentials[0], reg.Credentials[0]
+	planned.ID, planned.Name, planned.Status = "key-planned", "key-planned", credspec.StatusPlanned
+	retired.ID, retired.Name, retired.Status = "key-retired", "key-retired", credspec.StatusRetired
+	reg = credspec.NewRegistry(append(reg.Credentials, planned, retired)...)
+	events := filepath.Join(t.TempDir(), "events.json")
+	exec := func(args ...string) (string, error) {
+		cmd := New(Options{Use: "credentials", Registry: func() (*credspec.Registry, error) { return reg, nil },
+			EventsPath: events, Now: func() time.Time { return now }})
+		var out bytes.Buffer
+		cmd.SetOut(&out)
+		cmd.SetErr(&out)
+		cmd.SetArgs(args)
+		err := cmd.Execute()
+		return out.String(), err
+	}
+	// key-a and key-b are active, so their values exist though unrecorded.
+	out, err := exec("record", "key-*", "deployed")
+	if err != nil || !strings.Contains(out, "2 event(s)") ||
+		!strings.Contains(out, "skipped key-planned: not created yet") || !strings.Contains(out, "skipped key-retired: retired") {
+		t.Fatalf("record deployed: %v\n%s", err, out)
+	}
+	// Other events, and a single ID, are recorded as asked.
+	if out, err = exec("record", "key-*", "created"); err != nil || !strings.Contains(out, "4 event(s)") {
+		t.Errorf("record created: %v\n%s", err, out)
+	}
+	if _, err = exec("record", "key-retired", "verified"); err != nil {
+		t.Errorf("record one ID: %v", err)
+	}
+	if _, err = exec("record", "key-p*", "deployed"); err != nil {
+		t.Errorf("deployed once created: %v", err)
+	}
+	reg = credspec.NewRegistry(planned)
+	events = filepath.Join(t.TempDir(), "events.json")
+	if _, err = exec("record", "key-*", "deployed"); err == nil || !strings.Contains(err.Error(), "no value to deploy") {
+		t.Errorf("nothing with a value: %v", err)
+	}
+}

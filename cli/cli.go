@@ -256,6 +256,31 @@ func (e *env) status() *cobra.Command {
 	return c
 }
 
+// withValues keeps, for a deployed or verified event, the credentials
+// that have a value: not planned and still to be created, nor retired or
+// revoked. It returns the others as "<id>: <why>". Other events keep all.
+func withValues(r *credspec.Registry, l *credspec.Log, ids []string, t credspec.EventType) (keep, skipped []string) {
+	if t != credspec.EventDeployed && t != credspec.EventVerified {
+		return ids, nil
+	}
+	for _, id := range ids {
+		c, ok := r.Find(id)
+		if !ok {
+			keep = append(keep, id) // Append reports the unknown credential
+			continue
+		}
+		switch credspec.ProgressOf(c, l.Record(id)) {
+		case credspec.ProgressToCreate:
+			skipped = append(skipped, id+": not created yet")
+		case credspec.ProgressRetired:
+			skipped = append(skipped, id+": retired")
+		default:
+			keep = append(keep, id)
+		}
+	}
+	return keep, skipped
+}
+
 // matchIDs returns the ID itself, or with a *, every ID the pattern
 // matches; it is an error when nothing matches.
 func matchIDs(r *credspec.Registry, pattern string) ([]string, error) {
@@ -403,7 +428,9 @@ func (e *env) record() *cobra.Command {
 		Use:   "record <credential-id-or-pattern> <" + strings.Join(types, "|") + ">",
 		Short: "Add an event to the log: a credential was created, rotated, deployed, verified, given an expiry or revoked",
 		Long: "record adds an event for one credential, or for every credential whose ID matches a pattern,\n" +
-			"where * matches any text, slashes included: record 'example-app/prod/*' deployed.",
+			"where * matches any text, slashes included: record 'example-app/prod/*' deployed. A pattern's\n" +
+			"deployed or verified event skips the credentials with no value to deploy: planned ones not yet\n" +
+			"created, and retired or revoked ones.",
 		Args: cobra.ExactArgs(2),
 		ValidArgsFunction: func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 			if len(args) == 1 {
@@ -436,6 +463,13 @@ func (e *env) record() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			var skipped []string
+			if strings.Contains(args[0], "*") {
+				ids, skipped = withValues(r, l, ids, ev.Type)
+				if len(ids) == 0 {
+					return fmt.Errorf("every credential %q matches has no value to %s", args[0], strings.TrimSuffix(string(ev.Type), "ed"))
+				}
+			}
 			for _, id := range ids {
 				ev.Credential = id
 				if err := l.Append(r, ev); err != nil {
@@ -447,6 +481,11 @@ func (e *env) record() *cobra.Command {
 			}
 			for _, id := range ids {
 				if _, err := fmt.Fprintf(c.OutOrStdout(), "recorded %s %s at %s\n", id, ev.Type, ev.At.UTC().Format(time.RFC3339)); err != nil {
+					return err
+				}
+			}
+			for _, s := range skipped {
+				if _, err := fmt.Fprintf(c.OutOrStdout(), "skipped %s\n", s); err != nil {
 					return err
 				}
 			}
