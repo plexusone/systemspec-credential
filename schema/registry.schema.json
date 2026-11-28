@@ -353,7 +353,8 @@
             "google-cloud",
             "postgres",
             "stripe",
-            "registrar"
+            "registrar",
+            "resend"
           ]
         },
         "account": {

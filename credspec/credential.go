@@ -178,11 +178,13 @@ const (
 	IssuerPostgres    = "postgres"
 	IssuerStripe      = "stripe"
 	IssuerRegistrar   = "registrar"
+	// IssuerResend is Resend, which sends an application's email.
+	IssuerResend = "resend"
 )
 
 // Issuers lists the well-known issuer types.
 func Issuers() []string {
-	return []string{IssuerSelf, IssuerAWS, IssuerCloudflare, IssuerGitHub, IssuerGoogleCloud, IssuerPostgres, IssuerStripe, IssuerRegistrar}
+	return []string{IssuerSelf, IssuerAWS, IssuerCloudflare, IssuerGitHub, IssuerGoogleCloud, IssuerPostgres, IssuerStripe, IssuerRegistrar, IssuerResend}
 }
 
 // Generation says how and where a value is made.
