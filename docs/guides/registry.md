@@ -163,7 +163,7 @@ schema suggest.
   `personal-access-token`, `access-key`, `encryption-key`, `ssh-key`,
   `federated`, `account`.
 - **issuer type:** `self`, `aws`, `cloudflare`, `github`, `google-cloud`,
-  `postgres`, `stripe`, `registrar`.
+  `postgres`, `stripe`, `registrar`, `resend`.
 - **store type:** `aws-ssm`, `aws-secrets-manager`, `aws-kms`,
   `github-actions`, `password-manager`, `pulumi-config`, `host-file`,
   `local-file`, `process-env`, `none`.

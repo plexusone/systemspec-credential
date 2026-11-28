@@ -57,7 +57,7 @@ Well-known values (open sets, validated as lowercase slugs):
   `federated`, `account` (a person's login that controls other
   credentials).
 - **issuer type:** `self`, `aws`, `cloudflare`, `github`, `google-cloud`,
-  `postgres`, `stripe`, `registrar`.
+  `postgres`, `stripe`, `registrar`, `resend`.
 - **store type:** `aws-ssm`, `aws-secrets-manager`, `aws-kms`,
   `github-actions`, `password-manager`, `pulumi-config`, `host-file`,
   `local-file`, `process-env`, `none`.
