@@ -10,6 +10,16 @@
   ],
   "releases": [
     {
+      "version": "v0.5.0",
+      "date": "2026-11-28",
+      "added": [
+        {
+          "description": "`IssuerResend` (`resend`), a well-known issuer type for Resend, which sends an application's email; `Issuers` lists it and the registry schema gives it as an example",
+          "commit": "b4751b0"
+        }
+      ]
+    },
+    {
       "version": "v0.4.1",
       "date": "2026-11-25",
       "fixed": [
